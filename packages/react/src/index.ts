@@ -7,7 +7,7 @@ interface ReactOptions {
   userSpeakingThreshold: number
 }
 
-export type ReactRealTimeVADOptions = RealTimeVADOptions & ReactOptions
+export type ReactRealTimeVADOptions = RealTimeVADOptions & ReactOptions & {enable: boolean}
 
 const defaultReactOptions: ReactOptions = {
   startOnLoad: true,
@@ -17,6 +17,7 @@ const defaultReactOptions: ReactOptions = {
 export const defaultReactRealTimeVADOptions = {
   ...defaultRealTimeVADOptions,
   ...defaultReactOptions,
+  enable: false,
 }
 
 const reactOptionKeys = Object.keys(defaultReactOptions)
@@ -45,6 +46,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       isSpeechProbability > reactOptions.userSpeakingThreshold,
     false
   )
+  const enable = options.enable;
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState<false | { message: string }>(false)
   const [listening, setListening] = useState(false)
@@ -58,18 +60,23 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
       }
 
       let myvad: MicVAD | null
-      try {
-        myvad = await MicVAD.new(vadOptions)
-      } catch (e) {
-        setLoading(false)
-        if (e instanceof Error) {
-          setErrored({ message: e.message })
-        } else {
-          // @ts-ignore
-          setErrored({ message: e })
+      if (enable) {
+        try {
+          myvad = await MicVAD.new(vadOptions)
+        } catch (e) {
+          setLoading(false)
+          if (e instanceof Error) {
+            setErrored({ message: e.message })
+          } else {
+            // @ts-ignore
+            setErrored({ message: e })
+          }
+          return
         }
+      } else {
         return
       }
+
       setVAD(myvad)
       setLoading(false)
       if (reactOptions.startOnLoad) {
@@ -83,7 +90,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         setListening(false)
       }
     }
-  }, [])
+  }, [enable])
   const pause = () => {
     if (!loading && !errored) {
       vad?.pause()
