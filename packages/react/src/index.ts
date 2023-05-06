@@ -39,13 +39,14 @@ function useOptions(
   return [reactOptions, vadOptions]
 }
 
-export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
+export function useMicVAD(options: Partial<ReactRealTimeVADOptions>, dependencies?: any[]) {
   const [reactOptions, vadOptions] = useOptions(options)
   const [userSpeaking, updateUserSpeaking] = useReducer(
     (state: boolean, isSpeechProbability: number) =>
       isSpeechProbability > reactOptions.userSpeakingThreshold,
     false
   )
+  const deps = dependencies || [];
   const enable = options.enable;
   const [loading, setLoading] = useState(true)
   const [errored, setErrored] = useState<false | { message: string }>(false)
@@ -90,7 +91,7 @@ export function useMicVAD(options: Partial<ReactRealTimeVADOptions>) {
         setListening(false)
       }
     }
-  }, [enable])
+  }, [enable, ...deps])
   const pause = () => {
     if (!loading && !errored) {
       vad?.pause()
